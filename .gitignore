@@ -1,2 +1,4 @@
 microservice/node_modules
 microservice/dist
+.vscode
+.env

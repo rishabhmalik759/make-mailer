@@ -3,6 +3,6 @@
   "db": {
     "host": "localhost",
     "user": "postgres",
-    "database": "node_postgres_microservice_db"
+    "database": "mailer_microservice_db"
   }
 }

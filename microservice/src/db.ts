@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { Pool } from "pg";
-import { db } from "./config.json";
+import { db } from "./config/dbConfig.json";
 
 // This file should be gitignored and chmod chmod protected
 const DB_PASS_FILEPATH = path.resolve(path.join(__dirname, "./db-pass.txt"));

@@ -1,7 +1,8 @@
 import * as http from "http";
 import * as express from "express";
-import * as config from "./config.json";
+import * as config from "./config/dbConfig.json";
 import routes from "./routes.js";
+require("dotenv").config();
 
 // Initializing Express
 const app = express();
