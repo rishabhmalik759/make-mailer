@@ -1,9 +1,18 @@
 import { Transporter, createTransport } from "nodemailer";
 import { ImapFlowOptions } from "imapflow";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
-import { ImapFlow } from "imapflow";
+import { ImapFlow, MailboxObject } from "imapflow";
+import { getMailer, setMailer } from "../service/mailer";
 
 export const createMailer = async (): Promise<Mailer | undefined> => {
+  const currentMailer = getMailer();
+  if (
+    currentMailer?.user &&
+    currentMailer.imapTransporter &&
+    currentMailer.smtpTransporter
+  ) {
+    return currentMailer;
+  }
   const mailerOptions = await createMailerOptions();
   const smtpTransporter = await createSmtpTransporter();
   const imapTransporter = await createImapTransporter();
@@ -23,6 +32,7 @@ export const createMailer = async (): Promise<Mailer | undefined> => {
       imapTransporter,
       smtpTransporter,
     };
+    setMailer(_mailer);
     return _mailer;
   } else {
     console.error(
@@ -92,16 +102,11 @@ export const createImapTransporter = async (): Promise<
 > => {
   const mailerOptions = createMailerOptions();
   if (mailerOptions?.imapOptions) {
-    const _imap = new ImapFlow(mailerOptions.imapOptions);
-    try {
-      await _imap.connect();
-    } catch (error) {
-      console.error(`ERROR CREATING IMAP TRANSPORT, ${error}`);
-      return undefined;
-    }
-    _imap.logout();
-    return _imap;
-  } else return undefined;
+    const _imap = new ImapFlow({ ...mailerOptions.imapOptions });
+    if (_imap) return _imap;
+    else return undefined;
+  }
+  return undefined;
 };
 
 export interface Mailer {
