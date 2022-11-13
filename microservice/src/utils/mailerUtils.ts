@@ -1,4 +1,4 @@
-import nodemailer, { Transporter } from "nodemailer";
+import { Transporter, createTransport } from "nodemailer";
 import { ImapFlowOptions } from "imapflow";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { ImapFlow } from "imapflow";
@@ -38,8 +38,8 @@ export const createMailerOptions = (): MailerOptions | undefined => {
     port: Number(process.env.SMTP_PORT) ?? 0,
     secure: process.env.TLS_SECURE === "true" ? true : false,
     auth: {
-      user: process.env.USER ?? "",
-      pass: process.env.PASS ?? "",
+      user: process.env.MAILUSER ?? "",
+      pass: process.env.MAILPASS ?? "",
     },
   };
   const imapOptions: ImapOptions = {
@@ -47,8 +47,8 @@ export const createMailerOptions = (): MailerOptions | undefined => {
     port: Number(process.env.IMAP_PORT) ?? 0,
     secure: process.env.TLS_SECURE === "true" ? true : false,
     auth: {
-      user: process.env.USER ?? "",
-      pass: process.env.PASS ?? "",
+      user: process.env.MAILUSER ?? "",
+      pass: process.env.MAILPASS ?? "",
     },
   };
 
@@ -73,8 +73,9 @@ export const createSmtpTransporter = async (): Promise<
 > => {
   const mailerOptions = createMailerOptions();
   if (mailerOptions?.smtpOptions) {
+    console.log(mailerOptions.smtpOptions);
     const transporter: Transporter<SMTPTransport.SentMessageInfo> =
-      nodemailer.createTransport(mailerOptions.smtpOptions);
+      createTransport(mailerOptions.smtpOptions);
     try {
       await transporter?.verify();
     } catch (error) {

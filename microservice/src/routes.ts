@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { Mail, sendMail } from "./service/mailer";
 
 // Using a generic error for send-mail error
 const GENERIC_BACKEND_EXTERNAL_ERROR =
@@ -6,8 +7,20 @@ const GENERIC_BACKEND_EXTERNAL_ERROR =
 
 // Creating middleware routes
 const router = Router();
-const sendMailRouter = Router();
+const mailRouter = Router();
+router.use("/mail", mailRouter);
 
-router.use("/send-mail", sendMailRouter);
+mailRouter.post<{}, {}, Mail>("/", async (req, res, next) => {
+  const mail = req.body;
+  const response = await sendMail(mail);
+  if (response) {
+    return res.status(200).json({
+      message: `Email sent successfully to ${mail.to}`,
+    });
+  } else {
+    console.error(GENERIC_BACKEND_EXTERNAL_ERROR);
+    res.json({ err: GENERIC_BACKEND_EXTERNAL_ERROR });
+  }
+});
 
 export default router;

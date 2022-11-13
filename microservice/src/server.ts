@@ -8,8 +8,9 @@ require("dotenv").config();
 const app = express();
 
 // Installing middleware routes
-app.use(routes);
+app.use(express.json());
 
+app.use(routes);
 // Initializing HTTP server instances
 const httpServer = http.createServer(app);
 
