@@ -1,6 +1,6 @@
 import { createMailer, Mailer } from "../utils/mailerUtils";
 import { ImapFlow, MailboxObject } from "imapflow";
-import { response } from "express";
+import { MessageEnvelopeObject } from "imapflow";
 
 let mailer: Mailer | undefined;
 
@@ -34,63 +34,64 @@ export const sendMail = async (mail: Mail): Promise<boolean | unknown> => {
   return false;
 };
 
-export const getMail = async (options: GetMailOptions) => {
+export const getMail = async (
+  options: GetMailOptions
+): Promise<Message[] | unknown> => {
   const mailer: Mailer | undefined = await createMailer();
   if (!(mailer && mailer.user)) {
-    console.error("cannot create mailer");
-    return false;
+    console.error("Cannot create mailer");
+    return undefined;
   }
   const imap = mailer?.imapTransporter;
   if (imap) {
-    const messages = await getMailbox(imap, options);
-
-    console.log("Messages are ", messages);
+    const response = await getMailbox(imap, options);
+    const messages = response as Message[];
     return messages;
   }
   return undefined;
 };
 
-async function getMailbox(imap: ImapFlow, options: GetMailOptions) {
-  console.log("I am in get mail");
+async function getMailbox(
+  imap: ImapFlow,
+  options: GetMailOptions
+): Promise<Message[] | unknown> {
   if (!imap.authenticated) await imap.connect();
-
-  let lock = await imap.getMailboxLock(options.mailbox);
+  let lock;
 
   try {
-    // fetch latest message source
-    // client.mailbox includes information about currently selected mailbox
-    // "exists" value is also the largest sequence number available in the mailbox
+    lock = await imap.getMailboxLock(options.mailbox);
+  } catch (error) {
+    return error;
+  }
+
+  try {
     const mailbox = imap.mailbox as MailboxObject;
+
+    //Check if the mailbox exist
     await imap.fetchOne(mailbox.exists.toString(), {
       source: true,
     });
-    let messages = [];
-    // console.log(message.source.toString());
+    let messages: Message[] = [];
 
-    // list subjects for all messages
-    // uid value is always included in FETCH response, envelope strings are in unicode.
+    //Fetch all messages from the mailbox
     for await (let message of imap.fetch("1:*", {
       envelope: true,
       source: true,
     })) {
       messages.push({
         uid: message.uid,
-
         envelop: message.envelope,
         source: message.source,
       });
     }
-    console.log(messages);
     return messages;
   } catch (error) {
-    console.error(`ERROR IN FETCHING MAIL, ${error}`);
-    return response.status(404).json({ message: error });
+    // console.error(`ERROR IN FETCHING MAIL, ${error}`);
+    return error;
   } finally {
-    // Make sure lock is released, otherwise next `getMailboxLock()` never returns
+    // Releasing lock
     lock.release();
   }
-
-  // log out and close connection
 }
 
 export const reset = () => {
@@ -107,4 +108,9 @@ export interface Mail {
   subject: string;
   text?: string;
   html?: string;
+}
+export interface Message {
+  uid: number;
+  envelop: MessageEnvelopeObject;
+  source: Buffer;
 }

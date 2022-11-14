@@ -3,12 +3,13 @@ import {
   getMail,
   GetMailOptions,
   Mail,
+  Message,
   reset,
   sendMail,
 } from "./service/mailer";
 
 // Using a generic error for send-mail error
-const GENERIC_BACKEND_EXTERNAL_ERROR =
+const GENERIC_SENDMAIL_EXTERNAL_ERROR =
   "There was a problem with sending mail, please try again.";
 
 // Creating middleware routes
@@ -29,8 +30,8 @@ mailRouter.post<{}, {}, Mail>("/", async (req, res, next) => {
   } else if (responseError) {
     return res.status(404).json({ message: responseError });
   } else {
-    console.error(GENERIC_BACKEND_EXTERNAL_ERROR);
-    res.status(400).json({ err: GENERIC_BACKEND_EXTERNAL_ERROR });
+    console.error(GENERIC_SENDMAIL_EXTERNAL_ERROR);
+    res.status(400).json({ err: GENERIC_SENDMAIL_EXTERNAL_ERROR });
   }
 });
 
@@ -39,21 +40,32 @@ mailRouter.post("/reset", async (req, res, next) => {
   res.status(200).json({ message: "Reset was successful!" });
 });
 
-mailRouter.get<{}, {}, GetMailOptions>("/", async (req, res, next) => {
-  const { mailbox } = req.body;
-  if (!(mailbox && mailbox != "")) {
-    console.error(
-      `Mailbox name is required to create a get mail request. body: {mailbox: "INBOX"}`
-    );
-    return res.status(400).json({
-      message: `Mailbox name is required to create a get mail request. body: {mailbox: "INBOX"}`,
-    });
-  }
-  const messages = await getMail({ mailbox });
+mailRouter.get<{}, Message[] | ResponseError, GetMailOptions>(
+  "/",
+  async (req, res, next) => {
+    const { mailbox } = req.body;
+    if (!(mailbox && mailbox != "")) {
+      console.error(
+        `Mailbox name is required to create a get mail request. body: {mailbox: "INBOX"}`
+      );
+      return res.status(400).json({
+        message: `Mailbox name is required to create a get mail request. body: {mailbox: "INBOX"}`,
+      });
+    }
+    const response = await getMail({ mailbox });
+    const messages = response as Message[];
 
-  if (messages) {
-    res.status(200).json({ messages });
+    if (messages && Array.isArray(messages)) {
+      return res.status(200).json(messages);
+    } else
+      return res.status(400).json({
+        message: `ERROR FETCHING MAIL, ${response}`,
+      });
   }
-});
+);
 
 export default router;
+
+export interface ResponseError {
+  message: string;
+}
