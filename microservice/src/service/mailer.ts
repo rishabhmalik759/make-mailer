@@ -109,6 +109,7 @@ export interface Mail {
   text?: string;
   html?: string;
 }
+
 export interface Message {
   uid: number;
   envelop: MessageEnvelopeObject;
