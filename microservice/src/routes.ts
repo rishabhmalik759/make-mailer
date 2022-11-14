@@ -17,23 +17,24 @@ const router = Router();
 const mailRouter = Router();
 router.use("/mail", mailRouter);
 
-mailRouter.post<{}, {}, Mail>("/", async (req, res, next) => {
-  const mail = req.body;
-  const response: boolean | unknown = await sendMail(mail);
-  const responseResult = response as boolean;
-  const responseError = response as Error;
+mailRouter.post<{}, { message: string } | unknown, Mail>( "/", async (req, res, next) => {
+    const mail = req.body;
+    const response: boolean | unknown = await sendMail(mail);
+    const responseResult = response as boolean;
+    const responseError = response as Error;
 
-  if (responseResult === true) {
-    return res.status(200).json({
-      message: `Email sent successfully to ${mail.to}`,
-    });
-  } else if (responseError) {
-    return res.status(404).json({ message: responseError });
-  } else {
-    console.error(GENERIC_SENDMAIL_EXTERNAL_ERROR);
-    res.status(400).json({ err: GENERIC_SENDMAIL_EXTERNAL_ERROR });
+    if (responseResult === true) {
+      return res.status(200).json({
+        message: `Email sent successfully to ${mail.to}`,
+      });
+    } else if (responseError) {
+      return res.status(404).json({ message: responseError });
+    } else {
+      console.error(GENERIC_SENDMAIL_EXTERNAL_ERROR);
+      return res.status(400).json({ message: GENERIC_SENDMAIL_EXTERNAL_ERROR });
+    }
   }
-});
+);
 
 mailRouter.post("/reset", async (req, res, next) => {
   reset();
