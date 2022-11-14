@@ -1,8 +1,0 @@
-{
-  "httpPort": 8080,
-  "db": {
-    "host": "localhost",
-    "user": "postgres",
-    "database": "mailer_microservice_db"
-  }
-}

@@ -1,6 +1,5 @@
 import * as http from "http";
 import * as express from "express";
-import * as config from "./config/dbConfig.json";
 import routes from "./routes.js";
 require("dotenv").config();
 
@@ -16,9 +15,11 @@ const httpServer = http.createServer(app);
 
 // Starting HTTP server
 try {
-  httpServer.listen(config.httpPort, () => {
+  httpServer.listen(process.env.HTTP_PORT ?? 8080, () => {
     return console.log(
-      `Node Mailer Microservice running successfully on port ${config.httpPort}!`
+      `Node Mailer Microservice running successfully on port ${
+        process.env.HTTP_PORT ?? 8080
+      }!`
     );
   });
 } catch (error) {

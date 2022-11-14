@@ -1,0 +1,37 @@
+version: "3.6"
+services:
+  postgres:
+    build: 
+      context: ./db/
+    # image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: make_mailer_db
+    ports: 
+      - '5433:5432'
+    volumes:
+      - make-mailer-db:/var/lib/postgresql/data
+
+  make-mailer:
+    build:
+      context: ./microservice/
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: localhost
+      DB_NAME: make_mailer_db
+      MAILUSER: rishabh_malik@fastmail.com
+      MAILPASS: vp7hlqkqyx97q35c
+      TLS_SECURE: "true"
+      SMTP_HOST: smtp.fastmail.com
+      SMTP_PORT: 465
+      IMAP_HOST: imap.fastmail.com
+      IMAP_PORT: 993
+    depends_on:
+      - postgres
+    ports:
+      - '3001:8080'
+
+volumes:
+  make-mailer-db:
