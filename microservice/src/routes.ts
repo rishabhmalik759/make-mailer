@@ -6,6 +6,7 @@ import {
   Message,
   reset,
   sendMail,
+  sendScheduledMail,
 } from "./service/mailer";
 
 // Using a generic error for send-mail error
@@ -17,7 +18,9 @@ const router = Router();
 const mailRouter = Router();
 router.use("/mail", mailRouter);
 
-mailRouter.post<{}, { message: string } | unknown, Mail>( "/", async (req, res, next) => {
+mailRouter.post<{}, { message: string } | unknown, Mail>(
+  "/",
+  async (req, res, next) => {
     const mail = req.body;
     const response: boolean | unknown = await sendMail(mail);
     const responseResult = response as boolean;
@@ -32,6 +35,21 @@ mailRouter.post<{}, { message: string } | unknown, Mail>( "/", async (req, res, 
     } else {
       console.error(GENERIC_SENDMAIL_EXTERNAL_ERROR);
       return res.status(400).json({ message: GENERIC_SENDMAIL_EXTERNAL_ERROR });
+    }
+  }
+);
+
+mailRouter.post<{}, { message: string }, { date: Date; mail: Mail }>(
+  "/schedule",
+  async (req, res, next) => {
+    const { date, mail } = req.body;
+    try {
+      await sendScheduledMail(date, mail);
+      res.status(200).json({ message: "Schedule mail successful" });
+    } catch (error) {
+      res
+        .status(404)
+        .json({ message: `Cannot schedule mail, please try again!, ${error}` });
     }
   }
 );

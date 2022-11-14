@@ -1,6 +1,8 @@
 import { createMailer, Mailer } from "../utils/mailerUtils";
 import { ImapFlow, MailboxObject } from "imapflow";
 import { MessageEnvelopeObject } from "imapflow";
+import { schedule } from "node-cron";
+import { getScheduledMails, putScheduledMails } from "../db";
 
 let mailer: Mailer | undefined;
 
@@ -32,6 +34,33 @@ export const sendMail = async (mail: Mail): Promise<boolean | unknown> => {
   }
 
   return false;
+};
+
+export const sendScheduledMail = async (
+  date: Date | string,
+  mail: Mail,
+  timezone?: string
+) => {
+  const dateNew = new Date(date);
+  if (dateNew instanceof Date && !isNaN(dateNew.getDay())) {
+    const minute = dateNew.getMinutes();
+    const hours = dateNew.getHours();
+    const day = dateNew.getDate();
+    const month = dateNew.getMonth();
+    const cronString = `* ${minute} ${hours} ${day} ${monthNames[month]} *`;
+    schedule(
+      cronString,
+      () => {
+        sendMail(mail);
+      },
+      { timezone: timezone ?? "CET" }
+    );
+    putScheduledMails(dateNew, mail, (error, result) => {
+      if (error) {
+        console.error(`Error saving scheduled job to database, ${error}`);
+      }
+    });
+  }
 };
 
 export const getMail = async (
@@ -98,6 +127,22 @@ export const reset = () => {
   mailer = undefined;
 };
 
+export const loadScheduledMail = () => {
+  let scheduledMails: { date: Date; mail: Mail }[] = [];
+  getScheduledMails((error, result) => {
+    if (error) {
+      console.error(
+        `Fetching scheduled mails from the database failed, please check the configurations and try again!, ${error}`
+      );
+    }
+    scheduledMails = result;
+  });
+
+  scheduledMails.forEach((schedule) => {
+    sendScheduledMail(schedule.date, schedule.mail);
+  });
+};
+
 export interface GetMailOptions {
   mailbox: "INBOX" | string;
 }
@@ -115,3 +160,18 @@ export interface Message {
   envelop: MessageEnvelopeObject;
   source: Buffer;
 }
+
+const monthNames = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];

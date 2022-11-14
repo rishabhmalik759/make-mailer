@@ -17,6 +17,7 @@ services:
     build:
       context: ./microservice/
     environment:
+      HTTP_PORT: 8080
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_HOST: localhost

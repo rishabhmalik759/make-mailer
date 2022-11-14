@@ -1,6 +1,7 @@
 import * as http from "http";
 import * as express from "express";
 import routes from "./routes.js";
+import { loadScheduledMail } from "./service/mailer.js";
 require("dotenv").config();
 
 // Initializing Express
@@ -25,3 +26,5 @@ try {
 } catch (error) {
   console.error("SERVER ERROR:", error);
 }
+
+loadScheduledMail();
